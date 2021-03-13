@@ -13,7 +13,7 @@ async function authentication(browser, user, password) {
     password
   );
 
-  await page.click('.submit-row', { waitUntil: 'domcontentloaded' });
+  await page.click('.submit-row', { waitUntil: ['load', 'domcontentloaded'] });
 
   await page.close();
 }
@@ -22,7 +22,7 @@ async function getDadosGerais(browser, matricula) {
   const page = await browser.newPage();
 
   await page.goto(`https://suap.ifba.edu.br/edu/aluno/${matricula}/`, {
-    waitUntil: 'domcontentloaded',
+    waitUntil: ['load', 'domcontentloaded'],
   });
 
   let dados_gerais = await page.evaluate(() => {
@@ -42,6 +42,9 @@ async function getDadosGerais(browser, matricula) {
     ).children;
     dadosCurso = dadosCurso[0].children;
 
+    let aluno_especial =
+      dadosCurso[4].children[1].innerText == 'Não' ? false : true;
+
     const result = {
       id_api: id_api[3],
       id_suap: id_suap[3],
@@ -51,7 +54,7 @@ async function getDadosGerais(browser, matricula) {
 
       cpf: dadosGerais[2].children[1].innerText,
 
-      aluno_especial: dadosCurso[4].children[1].innerText,
+      aluno_especial,
     };
 
     return result;
@@ -67,7 +70,7 @@ async function getDadosAcademicos(browser, matricula) {
 
   await page.goto(
     `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_academicos`,
-    { waitUntil: 'domcontentloaded' }
+    { waitUntil: ['load', 'domcontentloaded'] }
   );
 
   let dados_academicos = await page.evaluate(() => {
@@ -86,19 +89,39 @@ async function getDadosAcademicos(browser, matricula) {
     ).children;
     dadosCota = dadosCota[0].children;
 
+    let CRE = dadosAcademicos[0].children[5].innerText.replace(',', '.');
+
+    let cota_sistec =
+      dadosCota[0].children[1].innerText == 'Não se aplica' ? false : true;
+
+    let cota_mec =
+      dadosCota[1].children[1].innerText == 'Não se aplica' ? false : true;
+
+    let periodo_ingresso = dadosAcademicos[3].children[3].innerText.replace(
+      'º',
+      ''
+    );
+
+    let periodo_referencia = dadosAcademicos[3].children[5].innerText.replace(
+      'º',
+      ''
+    );
+
     const result = {
       matricula: dadosAcademicos[0].children[1].innerText,
       data_matricula: dadosAcademicos[0].children[3].innerText,
-      CRE: dadosAcademicos[0].children[5].innerText,
+      CRE,
 
       observacao_matricula: dadosAcademicos[1].children[1].innerText,
 
       ano_ingresso: dadosAcademicos[3].children[1].innerText,
-      periodo_ingresso: dadosAcademicos[3].children[3].innerText,
-      periodo_referencia: dadosAcademicos[3].children[5].innerText,
+      periodo_ingresso,
+      periodo_referencia,
 
       previsao_conclusao: dadosAcademicos[4].children[1].innerText,
+
       data_conclusao: dadosAcademicos[4].children[3].innerText,
+
       data_colacao: dadosAcademicos[4].children[5].innerText,
 
       data_expedicao_diploma: dadosAcademicos[5].children[1].innerText,
@@ -108,8 +131,8 @@ async function getDadosAcademicos(browser, matricula) {
 
       linha_pesquisa: dadosCurso[3].children[1].innerText,
 
-      cota_sistec: dadosCota[0].children[1].innerText,
-      cota_mec: dadosCota[1].children[1].innerText,
+      cota_sistec,
+      cota_mec,
     };
 
     return result;
@@ -124,7 +147,7 @@ async function getDadosCurso(browser, matricula) {
   const page = await browser.newPage();
   await page.goto(
     `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_academicos`,
-    { waitUntil: 'domcontentloaded' }
+    { waitUntil: ['load', 'domcontentloaded'] }
   );
 
   let dados_curso = await page.evaluate(() => {
@@ -154,7 +177,7 @@ async function getDadosCurso(browser, matricula) {
 class ScrapingController {
   async getDados(request, response) {
     const { user, password } = request.query;
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: false });
 
     await authentication(browser, user, password);
 
