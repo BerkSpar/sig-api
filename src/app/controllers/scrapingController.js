@@ -245,7 +245,7 @@ async function getDadosPessoais(browser, matricula) {
         endereco: doc_contato.children[0].children[1].innerText,
         email: {
           academico: doc_contato.children[1].children[1].innerText,
-          google: doc_contato.children[1].children[2].innerText,
+          google: doc_contato.children[1].children[3].innerText,
           pessoal: doc_contato.children[1].children[5].innerText,
         },
         telefone: {
