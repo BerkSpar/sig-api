@@ -151,6 +151,97 @@ async function getDadosCurso(browser, matricula) {
   return dados_curso;
 }
 
+async function getDadosPessoais(browser, matricula) {
+  const page = await browser.newPage();
+  await page.goto(
+    `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_pessoais`,
+    { waitUntil: 'domcontentloaded' }
+  );
+
+  let dados_pessoais = await page.evaluate(() => {
+    let doc_geral = document.querySelector(
+      '#content > div:nth-child(7) > div:nth-child(1) > div > table'
+    ).children[0];
+
+    let doc_escolares = document.querySelector(
+      '#content > div:nth-child(7) > div:nth-child(2) > div > table'
+    ).children[0];
+
+    let doc_documentos = document.querySelector(
+      '#content > div:nth-child(7) > div:nth-child(3) > div > table'
+    ).children[0];
+
+    let doc_contato = document.querySelector(
+      '#content > div:nth-child(7) > div:nth-child(4) > div > table'
+    ).children[0];
+
+    let deficiencia =
+      doc_geral.children[2].children[1].innerText == 'Não' ? false : true;
+
+    const result = {
+      geral: {
+        nascimento: doc_geral.children[0].children[1].innerText,
+        naturalidade: doc_geral.children[1].children[1].innerText,
+        deficiencia,
+        tipo_deficiencia: doc_geral.children[2].children[3].innerText,
+        outras_necessidades: doc_geral.children[2].children[5].innerText,
+        estado_civil: doc_geral.children[0].children[3].innerText,
+        nacionalidade: doc_geral.children[1].children[3].innerText,
+        sexo: doc_geral.children[3].children[1].innerText,
+        etnia: doc_geral.children[3].children[3].innerText,
+        tipo_sanguineo: doc_geral.children[3].children[5].innerText,
+        nome_pai: doc_geral.children[4].children[1].innerText,
+        nome_mae: doc_geral.children[5].children[1].innerText,
+        nome_responsavel: doc_geral.children[6].children[1].innerText,
+        email_responsavel: doc_geral.children[6].children[3].innerText,
+        chave_acesso: doc_geral.children[6].children[5].innerText,
+      },
+      escolares: {
+        nivel_ensino_anterior: doc_escolares.children[0].children[1].innerText,
+        tipo_instituicao: doc_escolares.children[0].children[3].innerText,
+        ano_conclusao: doc_escolares.children[0].children[5].innerText,
+      },
+      documentos: {
+        identidade: doc_documentos.children[0].children[1].innerText,
+        orgao_expedidor: doc_documentos.children[0].children[3].innerText,
+        uf_identidade: doc_documentos.children[0].children[5].innerText,
+        data_expedicao: doc_documentos.children[0].children[7].innerText,
+        titulo_eleitor: doc_documentos.children[1].children[1].innerText,
+        zona: doc_documentos.children[1].children[3].innerText,
+        secao: doc_documentos.children[1].children[5].innerText,
+        uf_titulo_eleitor: doc_documentos.children[1].children[7].innerText,
+        tipo_certidao: doc_documentos.children[2].children[1].innerText,
+        cartorio: doc_documentos.children[2].children[3].innerText,
+        numero_termo: doc_documentos.children[3].children[1].innerText,
+        folha: doc_documentos.children[3].children[3].innerText,
+        livro: doc_documentos.children[3].children[5].innerText,
+        data_emissao: doc_documentos.children[3].children[7].innerText,
+        matricula: doc_documentos.children[3].children[9].innerText,
+      },
+      contato: {
+        endereco: doc_contato.children[0].children[1].innerText,
+        email: {
+          academico: doc_contato.children[1].children[1].innerText,
+          google: doc_contato.children[1].children[2].innerText,
+          pessoal: doc_contato.children[1].children[5].innerText,
+        },
+        telefone: {
+          principal: doc_contato.children[2].children[1].innerText,
+          secundario: doc_contato.children[2].children[3].innerText,
+          adicional_1: doc_contato.children[2].children[5].innerText,
+          adicional_2: doc_contato.children[2].children[7].innerText,
+        },
+      },
+    };
+
+    return result;
+  });
+
+  await page.close();
+
+  return dados_pessoais;
+}
+
 class ScrapingController {
   async getDados(request, response) {
     const { user, password } = request.query;
@@ -159,10 +250,9 @@ class ScrapingController {
     await authentication(browser, user, password);
 
     let aluno = await getDadosGerais(browser, user);
-
     aluno.dados_academicos = await getDadosAcademicos(browser, user);
-
     aluno.curso = await getDadosCurso(browser, user);
+    aluno.dados_pessoais = await getDadosPessoais(browser, user);
 
     browser.close();
 
