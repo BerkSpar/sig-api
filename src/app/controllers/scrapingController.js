@@ -13,9 +13,7 @@ async function authentication(browser, user, password) {
     password
   );
 
-  await page.click('.submit-row');
-
-  await page.waitForNavigation();
+  await page.click('.submit-row', { waitUntil: 'domcontentloaded' });
 
   await page.close();
 }
@@ -23,9 +21,9 @@ async function authentication(browser, user, password) {
 async function getDadosGerais(browser, matricula) {
   const page = await browser.newPage();
 
-  await page.goto(`https://suap.ifba.edu.br/edu/aluno/${matricula}/`);
-
-  await page.waitForSelector('#content');
+  await page.goto(`https://suap.ifba.edu.br/edu/aluno/${matricula}/`, {
+    waitUntil: 'domcontentloaded',
+  });
 
   let dados_gerais = await page.evaluate(() => {
     let dadosEditar = document.querySelector(
@@ -68,10 +66,9 @@ async function getDadosAcademicos(browser, matricula) {
   const page = await browser.newPage();
 
   await page.goto(
-    `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_academicos`
+    `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_academicos`,
+    { waitUntil: 'domcontentloaded' }
   );
-
-  await page.waitForSelector('#content');
 
   let dados_academicos = await page.evaluate(() => {
     let dadosAcademicos = document.querySelector(
@@ -126,10 +123,9 @@ async function getDadosAcademicos(browser, matricula) {
 async function getDadosCurso(browser, matricula) {
   const page = await browser.newPage();
   await page.goto(
-    `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_academicos`
+    `https://suap.ifba.edu.br/edu/aluno/${matricula}/?tab=dados_academicos`,
+    { waitUntil: 'domcontentloaded' }
   );
-
-  await page.waitForSelector('#content');
 
   let dados_curso = await page.evaluate(() => {
     let dadosCurso = document.querySelector(
@@ -158,7 +154,7 @@ async function getDadosCurso(browser, matricula) {
 class ScrapingController {
   async getDados(request, response) {
     const { user, password } = request.query;
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch();
 
     await authentication(browser, user, password);
 
